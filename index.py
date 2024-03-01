@@ -17,6 +17,9 @@ if __name__ == '__main__':
     # Getting a cursor
     cur = conn.cursor()
 
+    # Create tables
+    createTables(cur)
+
     #print a menu
     print("")
     print("######### Menu ##############")
