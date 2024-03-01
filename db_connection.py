@@ -10,31 +10,41 @@
 # standard arrays
 
 #importing some Python libraries
-# --> add your Python code here
+import psycopg2
 
 def connectDataBase():
 
     # Create a database connection object using psycopg2
-    # --> add your Python code here
+    conn = psycopg2.connect(database = "datacamp_courses", 
+                    user = "datacamp", 
+                    host= 'localhost',
+                    password = "postgresql_tutorial",
+                    port = 5432)
+    
+    return conn
 
-def createCategory(cur, cur, catId, catName):
-
+def createCategory(cur, catId, catName):
     # Insert a category in the database
-    # --> add your Python code here
+    query = "INSERT INTO Categories (id, name) VALUES (%s, %s)", (catId, catName)
+    print(query)
+    cur.execute(query)
+    print("Category created successfully.")
 
 def createDocument(cur, docId, docText, docTitle, docDate, docCat):
 
     # 1 Get the category id based on the informed category name
-    # --> add your Python code here
+    catId = cur.execute("SELECT id FROM Categories WHERE name = %s", docCat)
 
     # 2 Insert the document in the database. For num_chars, discard the spaces and punctuation marks.
-    # --> add your Python code here
+    cur.execute("INSERT INTO Documents (id, text, title, date) VALUES (%s, %s, %s, %s, %s, %s)", docId, docText, docTitle, docDate)
 
     # 3 Update the potential new terms.
     # 3.1 Find all terms that belong to the document. Use space " " as the delimiter character for terms and Remember to lowercase terms and remove punctuation marks.
     # 3.2 For each term identified, check if the term already exists in the database
     # 3.3 In case the term does not exist, insert it into the database
-    # --> add your Python code here
+    text = cur.execute("SELECT docText FROM Document WHERE docId=%s", docId)
+    text = text.lower()
+    terms = text.split(" ")
 
     # 4 Update the index
     # 4.1 Find all terms that belong to the document
