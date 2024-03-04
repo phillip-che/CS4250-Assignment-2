@@ -68,7 +68,6 @@ def createTables(cur):
 def createCategory(cur, catId, catName):
     # Insert a category in the database
     cur.execute("INSERT INTO Categories (id_cat, name) VALUES (%s, %s)", (catId, catName,))
-    print("Category created successfully.")
 
 def createDocument(cur, docId, docText, docTitle, docDate, docCat):
     
@@ -82,17 +81,16 @@ def createDocument(cur, docId, docText, docTitle, docDate, docCat):
 
     textLen = len(text.replace(" ", ""))
     cur.execute("INSERT INTO Documents (doc_number, id_cat, text, title, num_chars, date) VALUES (%s, %s, %s, %s, %s, %s)", (docId, catId, docText, docTitle, textLen, docDate,))
-
     # 3 Update the potential new terms.
     # 3.1 Find all terms that belong to the document. Use space " " as the delimiter character for terms and Remember to lowercase terms and remove punctuation marks.
     # 3.2 For each term identified, check if the term already exists in the database
     # 3.3 In case the term does not exist, insert it into the database
 
-
     terms = text.split(" ")
     for term in terms:
         cur.execute("SELECT EXISTS(SELECT 1 FROM Terms WHERE term=%s)", (term,))
-        exists = cur.fetchone()
+        exists = cur.fetchone()[0]
+
         if not exists:
             cur.execute("INSERT INTO Terms (term, num_chars) VALUES (%s, %s)", (term, len(term),))    
 
@@ -123,20 +121,19 @@ def deleteDocument(cur, docId):
     # 1.1 For each term identified, delete its occurrences in the index for that document
     # 1.2 Check if there are no more occurrences of the term in another document. If this happens, delete the term from the database.
     cur.execute("SELECT term FROM Document_Term WHERE doc_number = %s", docId)
-    terms = cur.fetchall()
+    terms = [row[0] for row in cur.fetchall()]
 
-    print(terms)
     for term in terms:
         cur.execute("DELETE FROM Document_Term WHERE doc_number = %s AND term = %s", (docId, term,))
 
         cur.execute("SELECT SUM(term_count) as term_occurrences FROM Document_Term WHERE term = %s", (term,))
-        term_occurrences = cur.fetchone()
+        term_occurrences = cur.fetchone()[0]
 
         if term_occurrences == 0:
             cur.execute("DELETE FROM Terms WHERE term = %s", (term,))
 
     # 2 Delete the document from the database
-    cur.execute("DELETE FROM Documents WHERE id_doc = %s", (docId,))
+    cur.execute("DELETE FROM Documents WHERE doc_number = %s", (docId,))
 
 def updateDocument(cur, docId, docText, docTitle, docDate, docCat):
 
@@ -151,5 +148,17 @@ def getIndex(cur):
     # Query the database to return the documents where each term occurs with their corresponding count. Output example:
     # {'baseball':'Exercise:1','summer':'Exercise:1,California:1,Arizona:1','months':'Exercise:1,Discovery:3'}
     # ...
-    # --> add your Python code here
-    print('test')
+    cur.execute("SELECT * FROM Document_Term")
+    result = cur.fetchall()
+
+    index = {}
+    for docTerm in result:
+        docId = docTerm[0]
+        term = docTerm[1]
+        termCount = docTerm[2]
+        cur.execute("SELECT title FROM Documents WHERE doc_number = %s", (docId,))
+        title = cur.fetchone()[0]
+        val = '%s:%s' % (title, termCount)
+        index[term] = (val)
+
+    return index

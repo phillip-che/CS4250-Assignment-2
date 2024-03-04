@@ -85,5 +85,4 @@ if __name__ == '__main__':
                print("Leaving the application ... ")
 
           else:
-
                print("Invalid Choice.")
