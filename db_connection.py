@@ -128,8 +128,8 @@ def deleteDocument(cur, docId):
 
         cur.execute("SELECT SUM(term_count) as term_occurrences FROM Document_Term WHERE term = %s", (term,))
         term_occurrences = cur.fetchone()[0]
-
-        if term_occurrences == 0:
+        
+        if term_occurrences == 0 or term_occurrences == None:
             cur.execute("DELETE FROM Terms WHERE term = %s", (term,))
 
     # 2 Delete the document from the database
@@ -159,6 +159,9 @@ def getIndex(cur):
         cur.execute("SELECT title FROM Documents WHERE doc_number = %s", (docId,))
         title = cur.fetchone()[0]
         val = '%s:%s' % (title, termCount)
-        index[term] = (val)
-
+        if index.get(term) == None:
+            index[term] = (val)
+        else:
+            index[term] = ", ".join([index[term], val])
+        
     return index
